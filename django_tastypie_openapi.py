@@ -170,7 +170,7 @@ class SchemaView(View):
                 f'{fk_className}{to_camelcase(_TASTYPIE_RESOURCE_URI_FIELD)}'
             )
 
-        description = tfield.verbose_name if tfield.verbose_name else 'NO_DESCRIPTION'
+        description = tfield.verbose_name if tfield.verbose_name else ''
         schema: Dict[str, Any] = {
             "description": description,
             "type": fieldToOASType(tfield),
@@ -476,8 +476,7 @@ class SchemaView(View):
                 if 'patch' in cls._meta.detail_allowed_methods:
                     # Safely handle patchSchema creation
                     patch_content = copy.deepcopy(wSchema.content) if wSchema.content else {}
-                    if "required" in patch_content:
-                        patch_content.pop("required")
+                    patch_content.pop("required", None)
                     patchSchema = Object(patch_content)
 
                     op_patch: Dict[str, Any] = {
@@ -564,7 +563,8 @@ class RawForeignKey(fields.ToOneField):
     @property
     def dehydrated_type(self) -> str:
         """Return the dehydrated type based on the related model's primary key."""
-        # Handle callable to_class (can be a class or a string that gets resolved)
+        # Handle callable to_class: In Tastypie, to_class can be a lambda/function
+        # that returns a resource class (for lazy resolution to avoid circular imports)
         to_class = self.to_class
         if callable(to_class) and not isinstance(to_class, type):
             to_class = to_class()
