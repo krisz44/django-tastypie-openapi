@@ -1,7 +1,6 @@
 import copy
 import json
 import typing
-import six
 from django.db.models import fields as djangofields
 from django.views import View
 from django.http.response import HttpResponse
@@ -64,8 +63,8 @@ class Schema(Object):
         self.title = title
         self.version = version
 
-        self.paths: typing.Mapping[str, typing.typing.Any] = {}
-        self.components: typing.Mapping[str, typing.Mapping[str, typing.Any]] = {}
+        self.paths: typing.Dict[str, typing.Any] = {}
+        self.components: typing.Dict[str, typing.Dict[str, typing.Any]] = {}
 
     def _register_component(self, component: str, name: str, object: Object):
         comp = self.components.setdefault(component, {})
@@ -124,7 +123,7 @@ class SchemaView(View):
                 fk_className, fk_pkcol.capitalize()))
 
         schema = {
-            "description": tfield.verbose_name or 'NO_DESCRIPTION',
+            "description": (tfield.verbose_name if tfield.verbose_name else 'NO_DESCRIPTION'),
             "type": fieldToOASType(tfield),
         }
         if tfield.null:
@@ -263,6 +262,9 @@ class SchemaView(View):
             if 'get' in cls._meta.list_allowed_methods:
                 params = []
                 for f, op in cls._meta.filtering.items():
+                    # Skip filter fields that don't exist in fieldSchema
+                    if f not in fieldSchema:
+                        continue
 
                     params.append(Object({
                         "name": f,
@@ -297,18 +299,21 @@ class SchemaView(View):
                     },
                 }
 
-            requestBody = Object({
-                "required": True,
-                "description": "Values for {}".format(resource_name),
-                "content": {
-                    "application/json": {
-                        "schema": wSchema,
-                    },
-                }
-            })
-            openapischema.register_requestBody('create{}'.format(resource_name), requestBody)
+            # Create requestBody only if wSchema exists
+            requestBody = None
+            if wschema["properties"]:
+                requestBody = Object({
+                    "required": True,
+                    "description": "Values for {}".format(resource_name),
+                    "content": {
+                        "application/json": {
+                            "schema": wSchema,
+                        },
+                    }
+                })
+                openapischema.register_requestBody('create{}'.format(resource_name), requestBody)
 
-            if 'post' in cls._meta.list_allowed_methods:
+            if 'post' in cls._meta.list_allowed_methods and requestBody:
                 op = {
                     "summary": "Create {}".format(resource_name),
                     "operationId": "Create{}".format(resource_name),
@@ -376,7 +381,7 @@ class SchemaView(View):
                         },
                     }
 
-                if 'put' in cls._meta.detail_allowed_methods:
+                if 'put' in cls._meta.detail_allowed_methods and requestBody:
                     op = {
                         "summary": "Overwrite a single {} by primary key".format(resource_name),
                         "operationId": "Put{}".format(resource_name),
@@ -403,9 +408,9 @@ class SchemaView(View):
 
                     operations['put'] = op
 
-                if 'patch' in cls._meta.detail_allowed_methods:
+                if 'patch' in cls._meta.detail_allowed_methods and wschema["properties"]:
                     patchSchema = Object(copy.deepcopy(wSchema.content))
-                    patchSchema.content.pop("required")
+                    patchSchema.content.pop("required", None)
 
                     op = {
                         "summary": "Patch a single {} by primary key".format(resource_name),
@@ -464,7 +469,10 @@ class SchemaView(View):
                 if operations:
                     openapischema.paths[detailendpoint] = operations
 
-        return HttpResponse(json.dumps(openapischema, cls=JSONEncoder))
+        return HttpResponse(
+            json.dumps(openapischema, cls=JSONEncoder),
+            content_type='application/json'
+        )
 
 
 class RawForeignKey(fields.ToOneField):
@@ -476,7 +484,7 @@ class RawForeignKey(fields.ToOneField):
         return getattr(bundle.obj, self.attribute + '_id')
 
     def build_related_resource(self, value, request=None, related_obj=None, related_name=None):
-        if isinstance(value, six.string_types):
+        if isinstance(value, str):
             fk_resource = self.to_class()
 
             bundle = fk_resource.build_bundle(request=request)
@@ -489,4 +497,4 @@ class RawForeignKey(fields.ToOneField):
     @property
     def dehydrated_type(self):
         return resources.BaseModelResource.api_field_from_django_field(
-            self.to_class.Meta.object_class._meta.pk).dehydrated_type
+            self.to_class._meta.object_class._meta.pk).dehydrated_type
