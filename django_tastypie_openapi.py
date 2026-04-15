@@ -53,11 +53,11 @@ class JSONEncoder(json.JSONEncoder):
 class Object:
     """Represents an OpenAPI schema object that can be referenced."""
 
-    def __init__(self, content: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(self, content: Dict[str, Any]) -> None:
         self.ref: Optional[str] = None
         self.content = content
 
-    def serialize(self) -> Optional[Dict[str, Any]]:
+    def serialize(self) -> Dict[str, Any]:
         if self.ref:
             return {"$ref": self.ref}
 
@@ -474,10 +474,8 @@ class SchemaView(View):
                     detail_operations['put'] = op_put
 
                 if 'patch' in cls._meta.detail_allowed_methods:
-                    # Safely handle patchSchema creation
-                    patch_content = copy.deepcopy(wSchema.content) if wSchema.content else {}
-                    patch_content.pop("required", None)
-                    patchSchema = Object(patch_content)
+                    patchSchema = Object(copy.deepcopy(wSchema.content))
+                    patchSchema.content.pop("required")
 
                     op_patch: Dict[str, Any] = {
                         "summary": f"Patch a single {resource_name} by primary key",
