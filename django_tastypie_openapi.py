@@ -44,7 +44,7 @@ class JSONEncoder(json.JSONEncoder):
     """Custom JSON encoder that handles Object and DelayedSchema serialization."""
 
     def default(self, o: Any) -> Any:
-        if isinstance(o, (Object, DelayedSchema)):
+        if isinstance(o, (Object, DelayedSchema, Schema)):
             return o.serialize()
 
         return super().default(o)
@@ -80,7 +80,7 @@ class DelayedSchema:
         }
 
 
-class Schema(Object):
+class Schema:
     def __init__(self, title: str, version: str) -> None:
         self.title = title
         self.version = version
