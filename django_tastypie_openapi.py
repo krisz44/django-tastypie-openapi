@@ -210,14 +210,6 @@ class SchemaView(View):
         return Object(schema)
 
     def get(self, request) -> HttpResponse:
-        # Ensure api, title, and version are set
-        if self.api is None:
-            raise ImproperlyConfigured("api must be set")
-        if self.title is None:
-            raise ImproperlyConfigured("title must be set")
-        if self.version is None:
-            raise ImproperlyConfigured("version must be set")
-
         openapischema = Schema(title=self.title, version=self.version)
 
         listmeta = Object({
