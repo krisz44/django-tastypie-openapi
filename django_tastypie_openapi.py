@@ -577,4 +577,4 @@ class RawForeignKey(fields.ToOneField):
             return 'string'  # Fallback if no primary key
 
         api_field = resources.BaseModelResource.api_field_from_django_field(pk_field)
-        return api_field.dehydrated_type if api_field else 'string'
+        return api_field.dehydrated_type
