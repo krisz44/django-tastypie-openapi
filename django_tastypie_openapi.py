@@ -568,8 +568,6 @@ class RawForeignKey(fields.ToOneField):
         # Get the object class from Meta
         if hasattr(to_class, 'Meta') and hasattr(to_class.Meta, 'object_class'):
             object_class = to_class.Meta.object_class
-        elif hasattr(to_class, '_meta') and hasattr(to_class._meta, 'object_class'):
-            object_class = to_class._meta.object_class
         else:
             return 'string'  # Fallback if we can't determine the type
 
