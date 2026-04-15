@@ -1,9 +1,0 @@
-LICENSE
-README.md
-django_tastypie_openapi.py
-setup.py
-django_tastypie_openapi.egg-info/PKG-INFO
-django_tastypie_openapi.egg-info/SOURCES.txt
-django_tastypie_openapi.egg-info/dependency_links.txt
-django_tastypie_openapi.egg-info/requires.txt
-django_tastypie_openapi.egg-info/top_level.txt
