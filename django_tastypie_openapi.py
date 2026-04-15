@@ -563,11 +563,7 @@ class RawForeignKey(fields.ToOneField):
     @property
     def dehydrated_type(self) -> str:
         """Return the dehydrated type based on the related model's primary key."""
-        # Handle callable to_class: In Tastypie, to_class can be a lambda/function
-        # that returns a resource class (for lazy resolution to avoid circular imports)
         to_class = self.to_class
-        if callable(to_class) and not isinstance(to_class, type):
-            to_class = to_class()
 
         # Get the object class from Meta
         if hasattr(to_class, 'Meta') and hasattr(to_class.Meta, 'object_class'):
