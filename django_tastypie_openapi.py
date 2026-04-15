@@ -41,7 +41,7 @@ def fieldToOASType(f: fields.ApiField) -> str:
 
 
 class JSONEncoder(json.JSONEncoder):
-    """Custom JSON encoder that handles Object and DelayedSchema serialization."""
+    """Custom JSON encoder that handles Object, DelayedSchema and Schema serialization."""
 
     def default(self, o: Any) -> Any:
         if isinstance(o, (Object, DelayedSchema, Schema)):
