@@ -568,8 +568,6 @@ class RawForeignKey(fields.ToOneField):
         # Get the object class from Meta
         if hasattr(to_class, 'Meta') and hasattr(to_class.Meta, 'object_class'):
             object_class = to_class.Meta.object_class
-        elif hasattr(to_class, '_meta') and hasattr(to_class._meta, 'object_class'):
-            object_class = to_class._meta.object_class
         else:
             return 'string'  # Fallback if we can't determine the type
 
@@ -579,4 +577,4 @@ class RawForeignKey(fields.ToOneField):
             return 'string'  # Fallback if no primary key
 
         api_field = resources.BaseModelResource.api_field_from_django_field(pk_field)
-        return api_field.dehydrated_type if api_field else 'string'
+        return api_field.dehydrated_type
